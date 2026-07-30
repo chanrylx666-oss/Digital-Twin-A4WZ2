@@ -1,0 +1,177 @@
+[gd_scene format=3 uid="uid://boban16pylp48"]
+
+[ext_resource type="PackedScene" uid="uid://bts0yuoogagin" path="res://Models/安装base板.blend" id="1_wlxy5"]
+[ext_resource type="PackedScene" uid="uid://cf5lretvbb7gj" path="res://Models/转臂部套与base板固定部分.blend" id="2_3v7ru"]
+[ext_resource type="PackedScene" uid="uid://b5tgxuxtqn37f" path="res://Models/转臂部套-升降部分.blend" id="3_tcnuu"]
+[ext_resource type="Script" uid="uid://drghoxmil5ydl" path="res://Models/TransferArm.cs" id="4_tcnuu"]
+[ext_resource type="PackedScene" uid="uid://blm0pajouqquk" path="res://Models/转臂部套-旋转部分.blend" id="4_tuemg"]
+[ext_resource type="PackedScene" uid="uid://diylqlv7m8gdi" path="res://Models/转臂部套-对中拾取夹爪部分.blend" id="5_i0g27"]
+[ext_resource type="PackedScene" uid="uid://u2wnd8e27g70" path="res://Models/上下料部套-固定部分.blend" id="6_ealrb"]
+[ext_resource type="PackedScene" uid="uid://bicwjld80k3ln" path="res://Models/上下料部套-回转部分.blend" id="7_jsnrv"]
+[ext_resource type="PackedScene" uid="uid://bl448du45ksir" path="res://Models/PRQ0.3平衡测量部套-固定部分.blend" id="8_lggff"]
+[ext_resource type="PackedScene" uid="uid://dh8m5h6v6iifr" path="res://Models/PRQ0.3平衡测量部套-升降部分.blend" id="9_s0gvp"]
+[ext_resource type="PackedScene" uid="uid://cbfg6kkllpq8b" path="res://Models/PRQ0.3平衡测量部套-水平移动部分.blend" id="10_vxd74"]
+[ext_resource type="PackedScene" uid="uid://dwgmrfr3naha4" path="res://Models/去重夹持组件-固定部分.blend" id="11_dhlwf"]
+[ext_resource type="PackedScene" uid="uid://gm6lqo522ido" path="res://Models/去重夹持组件-对中夹持部分.blend" id="12_5t8nk"]
+[ext_resource type="PackedScene" uid="uid://co6od8sifnqcc" path="res://Models/去重加工部套-固定部分.blend" id="13_j3e5s"]
+[ext_resource type="PackedScene" uid="uid://ctvantc4d3g0b" path="res://Models/去重加工部套-水平移动部分.blend" id="14_nu31w"]
+[ext_resource type="PackedScene" uid="uid://c0r1wp45gmksb" path="res://Models/转子.blend" id="15_3v7ru"]
+
+[sub_resource type="SphereShape3D" id="SphereShape_pickup"]
+radius = 60.0
+
+[sub_resource type="SphereShape3D" id="SphereShape_workpiece"]
+radius = 60.0
+
+[sub_resource type="Environment" id="Environment_3v7ru"]
+reflected_light_source = 2
+
+[node name="A4WZ2" type="Node3D" unique_id=121863648]
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=962721294]
+transform = Transform3D(-0.8660254, -0.43301278, 0.25, 0, 0.49999997, 0.86602545, -0.50000006, 0.75, -0.43301266, 0, 0, 0)
+shadow_enabled = true
+
+[node name="安装base板" parent="." unique_id=2080502518 instance=ExtResource("1_wlxy5")]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0.6780853, 0.09338379, -2.5810394)
+
+[node name="转臂部套与base板固定部分" parent="." unique_id=1038582261 instance=ExtResource("2_3v7ru")]
+transform = Transform3D(1.9106855e-15, -4.371139e-08, 1, -1, -4.371139e-08, 0, 4.371139e-08, -1, -4.371139e-08, 2.3216515, 0, 15.152676)
+
+[node name="转臂部套-升降部分" parent="." unique_id=30288434 node_paths=PackedStringArray("LiftPart", "RotatePart", "Grippers", "Workpieces", "WorkpieceDetectionAreas", "WorkpieceMount", "WorkpieceReleaseParent", "PickDetectionArea", "LoadingTurntable", "LeftDetectionUnit", "LeftDetectionLift", "RightDetectionUnit", "RightDetectionLift", "LeftProbes", "RightProbes") instance=ExtResource("3_tcnuu")]
+transform = Transform3D(1.9106855e-15, -4.3711385e-08, -1.0000001, -1, -4.3711385e-08, 0, -4.371139e-08, 0.99999994, -4.3711392e-08, 0, 0, 12.773)
+script = ExtResource("4_tcnuu")
+LiftPart = NodePath(".")
+RotatePart = NodePath("转臂部套-旋转部分")
+Grippers = [NodePath("转臂部套-旋转部分/转臂部套-对中拾取夹爪部分"), NodePath("转臂部套-旋转部分/转臂部套-对中拾取夹爪部分2"), NodePath("转臂部套-旋转部分/转臂部套-对中拾取夹爪部分3"), NodePath("转臂部套-旋转部分/转臂部套-对中拾取夹爪部分4"), NodePath("转臂部套-旋转部分/转臂部套-对中拾取夹爪部分5"), NodePath("转臂部套-旋转部分/转臂部套-对中拾取夹爪部分6"), NodePath("转臂部套-旋转部分/转臂部套-对中拾取夹爪部分7"), NodePath("转臂部套-旋转部分/转臂部套-对中拾取夹爪部分8")]
+Workpieces = [NodePath("../上下料部套-回转部分/转子"), NodePath("../PRQ0_3平衡测量部套-固定部分/转子2"), NodePath("../PRQ0_3平衡测量部套-固定部分2/转子3"), NodePath("../去重夹持组件-固定部分/转子4")]
+WorkpieceDetectionAreas = [NodePath("../上下料部套-回转部分/转子/转子检测区"), NodePath("../PRQ0_3平衡测量部套-固定部分/转子2/转子检测区"), NodePath("../PRQ0_3平衡测量部套-固定部分2/转子3/转子检测区"), NodePath("../去重夹持组件-固定部分/转子4/转子检测区")]
+WorkpieceMount = NodePath("转臂部套-旋转部分/工件挂点")
+WorkpieceReleaseParent = NodePath("..")
+PickDetectionArea = NodePath("转臂部套-旋转部分/工件挂点/夹取检测区")
+LoadingTurntable = NodePath("../上下料部套-回转部分")
+LeftDetectionUnit = NodePath("../LeftDetector")
+LeftDetectionLift = NodePath("../LeftDetector/PRQ0_3平衡测量部套-升降部分2")
+RightDetectionUnit = NodePath("../RightDetector")
+RightDetectionLift = NodePath("../RightDetector/PRQ0_3平衡测量部套-升降部分")
+LeftProbes = [NodePath("../LeftDetector")]
+RightProbes = [NodePath("../RightDetector")]
+LeftLiftDownZ = 38.0
+RightLiftDownZ = 38.0
+PickPosition = Vector3(0, -78, 0)
+PlacePosition = Vector3(0, -78, 0)
+
+[node name="转臂部套-旋转部分" parent="转臂部套-升降部分" unique_id=1980681498 instance=ExtResource("4_tuemg")]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1.0000001, 0, -1, -4.3711392e-08, -91.79657, 3.503521, -1.5314401e-07)
+
+[node name="工件挂点" type="Node3D" parent="转臂部套-升降部分/转臂部套-旋转部分" unique_id=507213998]
+
+[node name="夹取检测区" type="Area3D" parent="转臂部套-升降部分/转臂部套-旋转部分/工件挂点" unique_id=228496454]
+
+[node name="碰撞体" type="CollisionShape3D" parent="转臂部套-升降部分/转臂部套-旋转部分/工件挂点/夹取检测区" unique_id=1588789562]
+shape = SubResource("SphereShape_pickup")
+
+[node name="转臂部套-对中拾取夹爪部分" parent="转臂部套-升降部分/转臂部套-旋转部分" unique_id=1527128485 instance=ExtResource("5_i0g27")]
+transform = Transform3D(-4.371139e-08, 4.371139e-08, 1, 1, 1.9106855e-15, 4.371139e-08, 0, 1, -4.371139e-08, -244.26874, -28.59794, 197.52773)
+
+[node name="转臂部套-对中拾取夹爪部分2" parent="转臂部套-升降部分/转臂部套-旋转部分" unique_id=2125921480 instance=ExtResource("5_i0g27")]
+transform = Transform3D(4.371139e-08, 4.3711392e-08, 1, -1, -8.742278e-08, 4.3711392e-08, 8.742278e-08, -1, 4.371139e-08, -244.20343, 27.857988, 224.84964)
+
+[node name="转臂部套-对中拾取夹爪部分3" parent="转臂部套-升降部分/转臂部套-旋转部分" unique_id=542374816 instance=ExtResource("5_i0g27")]
+transform = Transform3D(-4.371139e-08, 4.371139e-08, 1, 1, 1.9106855e-15, 4.371139e-08, 0, 1, -4.371139e-08, -244.20343, -27.98469, -222.51443)
+
+[node name="转臂部套-对中拾取夹爪部分4" parent="转臂部套-升降部分/转臂部套-旋转部分" unique_id=1208637206 instance=ExtResource("5_i0g27")]
+transform = Transform3D(4.371139e-08, 4.3711392e-08, 1, -1, -8.742278e-08, 4.3711392e-08, 8.742278e-08, -1, 4.371139e-08, -244.20343, 28.47124, -197.73312)
+
+[node name="转臂部套-对中拾取夹爪部分5" parent="转臂部套-升降部分/转臂部套-旋转部分" unique_id=848804046 instance=ExtResource("5_i0g27")]
+transform = Transform3D(1.9106853e-15, 0, 1, -4.3711385e-08, 0.99999994, 0, -0.99999994, -4.3711385e-08, 1.9106855e-15, -244.26874, 197.67235, 27.818138)
+
+[node name="转臂部套-对中拾取夹爪部分6" parent="转臂部套-升降部分/转臂部套-旋转部分" unique_id=1204809756 instance=ExtResource("5_i0g27")]
+transform = Transform3D(1.9106853e-15, 8.742277e-08, 1, -4.3711385e-08, -0.99999994, 8.742278e-08, 0.99999994, -4.3711385e-08, 1.9106855e-15, -244.20343, 221.72629, -28.527184)
+
+[node name="转臂部套-对中拾取夹爪部分7" parent="转臂部套-升降部分/转臂部套-旋转部分" unique_id=1491398959 instance=ExtResource("5_i0g27")]
+transform = Transform3D(1.9106853e-15, 0, 1, -4.3711385e-08, 0.99999994, 0, -0.99999994, -4.3711385e-08, 1.9106855e-15, -244.26874, -221.3589, 27.818138)
+
+[node name="转臂部套-对中拾取夹爪部分8" parent="转臂部套-升降部分/转臂部套-旋转部分" unique_id=635414108 instance=ExtResource("5_i0g27")]
+transform = Transform3D(1.9106853e-15, 8.742277e-08, 1, -4.3711385e-08, -0.99999994, 8.742278e-08, 0.99999994, -4.3711385e-08, 1.9106855e-15, -244.20343, -197.39917, -28.527184)
+
+[node name="上下料部套-固定部分" parent="." unique_id=1926827938 instance=ExtResource("6_ealrb")]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0.35478973, 258.00247)
+
+[node name="上下料部套-回转部分" parent="." unique_id=574386032 instance=ExtResource("7_jsnrv")]
+transform = Transform3D(-4.371139e-08, -1, 4.371139e-08, 0, -4.371139e-08, -1, 1, -4.371139e-08, 1.9106855e-15, 0, 189.33618, 278.35794)
+
+[node name="转子" parent="上下料部套-回转部分" unique_id=169050396 instance=ExtResource("15_3v7ru")]
+transform = Transform3D(-4.371139e-08, 0, 1, -1, -4.371139e-08, -4.371139e-08, 4.371139e-08, -1, 1.9106855e-15, -60.319397, 1.4596772e-06, -26.925873)
+
+[node name="转子检测区" type="Area3D" parent="上下料部套-回转部分/转子" unique_id=1319236639]
+
+[node name="碰撞体" type="CollisionShape3D" parent="上下料部套-回转部分/转子/转子检测区" unique_id=1656978969]
+shape = SubResource("SphereShape_workpiece")
+
+[node name="PRQ0_3平衡测量部套-固定部分" parent="." unique_id=1769360821 instance=ExtResource("8_lggff")]
+transform = Transform3D(-4.3711392e-08, -0.9999998, -4.371139e-08, 3.8213714e-15, 4.371138e-08, -1, 1.0000001, -4.371138e-08, 1.9106855e-15, 210.3461, 21.425476, 14.674889)
+
+[node name="转子2" parent="PRQ0_3平衡测量部套-固定部分" unique_id=2137815629 instance=ExtResource("15_3v7ru")]
+transform = Transform3D(-4.371139e-08, 3.821371e-15, 0.99999994, -1.0000002, 4.3711395e-08, -4.3711395e-08, -4.3711385e-08, -1, 1.9106855e-15, -210.59917, 210.34615, -191.39468)
+
+[node name="转子检测区" type="Area3D" parent="PRQ0_3平衡测量部套-固定部分/转子2" unique_id=1157911479]
+
+[node name="碰撞体" type="CollisionShape3D" parent="PRQ0_3平衡测量部套-固定部分/转子2/转子检测区" unique_id=1144066512]
+shape = SubResource("SphereShape_workpiece")
+
+[node name="PRQ0_3平衡测量部套-固定部分2" parent="." unique_id=2000279799 instance=ExtResource("8_lggff")]
+transform = Transform3D(-4.3711392e-08, 0.9999998, -4.371139e-08, 0, -4.371138e-08, -1, -1.0000001, -4.371138e-08, 1.9106855e-15, -210.3, 21.425, 24.265)
+
+[node name="转子3" parent="PRQ0_3平衡测量部套-固定部分2" unique_id=664341999 instance=ExtResource("15_3v7ru")]
+transform = Transform3D(0.99999994, 2.1175826e-22, 0, -3.5527137e-15, -4.3711395e-08, 1.0000002, 0, -1, -4.371139e-08, 5.6997566, 419.98328, -192.24467)
+
+[node name="转子检测区" type="Area3D" parent="PRQ0_3平衡测量部套-固定部分2/转子3" unique_id=1372687664]
+
+[node name="碰撞体" type="CollisionShape3D" parent="PRQ0_3平衡测量部套-固定部分2/转子3/转子检测区" unique_id=273724159]
+shape = SubResource("SphereShape_workpiece")
+
+[node name="去重夹持组件-固定部分" parent="." unique_id=6461663 instance=ExtResource("11_dhlwf")]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 7.056778, -194.73108)
+
+[node name="转子4" parent="去重夹持组件-固定部分" unique_id=926625636 instance=ExtResource("15_3v7ru")]
+transform = Transform3D(-4.371139e-08, 0, 1, 1, -4.371139e-08, 4.371139e-08, 4.371139e-08, 1, 1.9106855e-15, -208.94554, -213.29631, 206.61285)
+
+[node name="转子检测区" type="Area3D" parent="去重夹持组件-固定部分/转子4" unique_id=1202302080]
+
+[node name="碰撞体" type="CollisionShape3D" parent="去重夹持组件-固定部分/转子4/转子检测区" unique_id=2038968203]
+shape = SubResource("SphereShape_workpiece")
+
+[node name="去重夹持组件-对中夹持部分" parent="." unique_id=1630221233 instance=ExtResource("12_5t8nk")]
+transform = Transform3D(1.3113414e-07, -1, 3.821371e-15, 4.3711385e-08, 1.9106855e-15, -1, 0.99999994, 1.3113416e-07, 4.371139e-08, 37.577, 160.2126, -275.105)
+
+[node name="去重夹持组件-对中夹持部分2" parent="." unique_id=1830364876 instance=ExtResource("12_5t8nk")]
+transform = Transform3D(-4.3711385e-08, 1, -4.371139e-08, 0, -4.371139e-08, -1, -0.99999994, -4.371139e-08, 1.9106855e-15, -33.348, 160.2126, -117.013)
+
+[node name="去重加工部套-固定部分" parent="." unique_id=253520766 instance=ExtResource("13_j3e5s")]
+transform = Transform3D(-0.99999994, -8.742277e-08, 3.821371e-15, 0, -4.3711385e-08, -1, 8.742277e-08, -0.99999994, 4.371139e-08, 417.61993, -1.6183624, -196.30258)
+
+[node name="去重加工部套-水平移动部分" parent="." unique_id=769224336 instance=ExtResource("14_nu31w")]
+transform = Transform3D(-1, 8.742278e-08, 0, 3.821371e-15, 4.371139e-08, -1, -8.742278e-08, -1, -4.371139e-08, 438.21255, -1.9819031, -197.79488)
+
+[node name="去重加工部套-固定部分2" parent="." unique_id=631903732 instance=ExtResource("13_j3e5s")]
+transform = Transform3D(0.9999998, 0, 0, 0, -4.371138e-08, -1, 0, 0.9999998, -4.371139e-08, -413.1981, -1.6183624, -197.14943)
+
+[node name="去重加工部套-水平移动部分2" parent="." unique_id=965131206 instance=ExtResource("14_nu31w")]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, -433, -1.982, -196.948)
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=1668528811]
+transform = Transform3D(0.4331485, 0.50686216, -0.74530065, -0.01859937, 0.83174723, 0.554843, 0.90113056, -0.22646728, 0.36969733, -714.7629, 896.2995, 284.5971)
+environment = SubResource("Environment_3v7ru")
+
+[node name="RightDetector" parent="." unique_id=750472774 instance=ExtResource("10_vxd74")]
+transform = Transform3D(-4.3711385e-08, -0.9999999, 4.3711395e-08, -4.2351647e-22, -4.3711392e-08, -1, 0.9999999, -4.3711385e-08, 1.910685e-15, 211.7948, 20.8321, -1.5123711)
+
+[node name="PRQ0_3平衡测量部套-升降部分" parent="RightDetector" unique_id=458007915 instance=ExtResource("9_s0gvp")]
+transform = Transform3D(1.0000001, 3.5527137e-15, 8.4703295e-22, -3.5527137e-15, 1.0000001, 1.0658141e-14, -4.2351647e-22, -1.0658141e-14, 1, -2.134762, -0.003616333, 2.6690445)
+
+[node name="LeftDetector" parent="." unique_id=90981733 instance=ExtResource("10_vxd74")]
+transform = Transform3D(-4.3711385e-08, 0.9999999, -4.371139e-08, 0, -4.3711385e-08, -1, -0.9999999, -4.3711385e-08, 1.9106855e-15, -211.29483, 20.8321, 40.45413)
+
+[node name="PRQ0_3平衡测量部套-升降部分2" parent="LeftDetector" unique_id=2048884672 instance=ExtResource("9_s0gvp")]
+transform = Transform3D(1.0000001, -3.5527137e-15, 0, 3.5527137e-15, 1.0000001, 3.5527137e-15, 0, -3.5527137e-15, 1, -2.1347733, -0.0012817383, 2.6690445)
