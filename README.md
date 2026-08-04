@@ -1,185 +1,280 @@
-# 四工位动平衡机数字孪生：快速上手
+# 从 0 复刻四工位动平衡机数字孪生
 
-> 面向第一次接触 Godot 的同学。
-> 目标：5 分钟运行项目，10 分钟完成四转子搬运与测速演示。
+> 面向第一次接触 Godot、C# 与数字孪生的学习者。
+> 完成后：你将从一个空项目做出“四转子同时夹取 → 升降 → 转位 → 放件 → 双侧测速 → 复位”的可运行数字孪生。
 
-这是一个使用 **Godot + C#** 制作的四工位卧式钻孔动平衡机数字孪生项目。当前版本用于离线演示：它会控制三维模型动画，不会控制真实 PLC、电机或气缸。
+本教程不只是介绍如何操作成品，而是按搭建顺序解释：**为什么要创建这些节点、脚本怎么组织、Inspector 怎样绑定、如何验证每一步。**
 
-## 项目可以演示什么
+## 0. 先理解复刻范围
 
-- 四个转子同时夹取、升降、旋转和放件；
-- 转子夹取后跟随机械手运动，松爪后与机械手分离；
-- 上料转子取走后，上料回转台旋转；
-- 左右测速模块并行移入、下探、保持测量并回原点；
-- 一键自动循环、手动单动作调试和紧急停止。
+一个完整数字孪生包含两部分：
 
-## 运行环境
+1. **功能复刻**：节点层级、运动逻辑、碰撞检测、转子挂接、按键控制。这部分可完全从零完成。
+2. **外观复刻**：机械的 CAD / Blender 模型、材质、灯光和相机。这部分可使用仓库 `Models/` 中的模型资源；没有模型时，先用方块、圆柱等基本网格替代，功能不会受影响。
 
-只需要安装：
+建议严格按两个阶段学习：先做出“会动”的简化机器，再换成真实外观模型。不要一开始就被复杂 CAD 模型和坐标问题卡住。
 
-1. **Godot Engine 4.6.x .NET 版**。请选择包含 `.NET` 或 `C#` 的版本；普通 Godot 不能编译本项目的 C# 脚本。
-2. **.NET 8 SDK**。本项目的 C# 目标框架是 .NET 8。
+## 1. 预备知识与工具
 
-Visual Studio 只在需要阅读或修改 C# 代码时使用，并不是运行项目的必要条件。
+### 必备工具
 
-## 第一次运行
+- **Godot Engine 4.6.x .NET 版**：一定选择 `.NET` / `C#` 版本。
+- **.NET 8 SDK**：本项目使用 .NET 8。
+- **Visual Studio 2022/2026**：推荐安装，用于阅读和调试 C#；不是必须。
 
-1. 获取完整项目文件夹。
-2. 启动 Godot .NET 版，点击 **导入**。
-3. 选择根目录下的 `project.godot`，点击 **导入并编辑**。
-4. 等待 Godot 完成资源导入和 C# 编译。
-5. 按 **F6** 运行当前场景，或按 **F5** 运行整个项目。
-6. 在运行出来的三维窗口中单击一下，让它获得键盘焦点。
+### 建议掌握的三个概念
 
-也可以在项目根目录执行下面的命令验证 C# 工程：
+| 概念 | 初学者理解 |
+|---|---|
+| `Node3D` | 三维场景里的一个空坐标点，可以当作“零件安装位” |
+| 父子节点 | 父节点运动时，所有子节点会跟着运动 |
+| `Area3D` | 一个看不见的检测范围，可用来判断“是否进入夹取区” |
 
-```powershell
-dotnet build ReView.sln
+## 2. 创建空 Godot C# 项目
+
+1. 打开 Godot 项目管理器，点击 **创建**。
+2. 项目名称填写 `DigitalTwinA4WZ2`。
+3. 选择一个新的空文件夹。
+4. 选择 **兼容性** 或 **Forward+** 渲染器；本项目原场景使用 `Forward+`。
+5. 确认项目使用 C# / .NET 支持。
+6. 创建后，在根目录确认 C# 项目文件存在；其关键结构应类似：
+
+```xml
+<Project Sdk="Godot.NET.Sdk/4.6.2">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+  </PropertyGroup>
+</Project>
 ```
 
-## 按键说明
+7. 新建一个 **3D 场景**，根节点命名为 `Main`，保存为 `Main.tscn`。
+8. 在场景中加入 `Camera3D`、`DirectionalLight3D` 和一个 `WorldEnvironment`，让场景能够看见物体。
 
-| 按键 | 功能 | 适用场景 |
-|---|---|---|
-| `空格` | 执行完整四转子同步搬运循环 | 一键演示整机流程 |
-| `D` | 独立执行左右测速模块流程 | 演示检测模块 |
-| `E` | 停止当前动画，并让测速模块回原点 | 调试中断或异常恢复 |
-| `1` | 升降切换：下降/回原点 | 手动调试升降 |
-| `2` | 闭合夹具，并尝试抓取四个转子 | 手动测试夹取 |
-| `3` | 打开夹具，释放已抓取转子 | 手动测试放件 |
-| `4` | 转臂切换：0°/设定角度 | 手动测试旋转 |
-| `5` | 独立执行测速模块流程 | 与 `D` 作用相同 |
-| `6` | 升降和转臂复位 | 手动调试结束后复位 |
+> 验证：按 `F6`。即使只看到空场景，也说明项目、相机和 C# 环境已准备完成。
 
-自动循环运行时，数字键 `1`～`6` 会被锁定，避免动作重叠。
+## 3. 第一阶段：先搭一个可运行的简化机器
 
-## 最简单的演示
+先不要导入真实设备模型。使用 `Node3D` 作为机构安装位，使用 `MeshInstance3D`（BoxMesh、CylinderMesh）作为可见占位物。
 
-### 一键演示
-
-按一次 `空格`，等待动画完成。
+在 `Main` 下搭出下面的层级；名称可以不同，但后续 Inspector 引用必须对应：
 
 ```text
-机械手下降
-→ 八个夹爪闭合
-→ 确认四个转子均可夹取
-→ 四个转子挂到机械手
-→ 机械手上升
-→ 转臂旋转
-→ 机械手下降
-→ 夹爪打开、转子放到目标位置
-→ 测速模块执行检测
-→ 机械手和测速模块复位
+Main (Node3D)
+├─ TransferArm (Node3D，挂 TransferArm.cs)
+│  └─ RotatePart (Node3D)
+│     ├─ WorkpieceMount (Node3D)
+│     │  └─ PickDetectionArea (Area3D)
+│     │     └─ CollisionShape3D（SphereShape3D）
+│     ├─ Gripper1 ~ Gripper8（Node3D，可各放一个方块）
+│     └─ ArmMesh（可选，占位模型）
+├─ Workpiece1 ~ Workpiece4（各自为 Node3D）
+│  ├─ RotorMesh（CylinderMesh）
+│  └─ DetectionArea (Area3D)
+│     └─ CollisionShape3D（SphereShape3D）
+├─ LoadingTurntable (Node3D)
+├─ LeftDetector (Node3D)
+│  └─ LeftLift (Node3D)
+└─ RightDetector (Node3D)
+   └─ RightLift (Node3D)
 ```
 
-### 手动拆分演示
+### 放置占位物的建议
 
-依次按：
+- 让 `TransferArm` 位于设备中心。
+- 将 4 个 `Workpiece` 放在机械手下方或四个工位位置。
+- `Gripper1`～`Gripper8` 围绕 `WorkpieceMount` 对称摆放。
+- `PickDetectionArea` 的球形范围先设大一些，确保四个 `DetectionArea` 都能被检测到。
+- `LeftDetector` 和 `RightDetector` 放在两个测量工位两侧。
+
+> 验证：在编辑器中选中 `PickDetectionArea`，勾选 **Debug → Visible Collision Shapes** 后运行，可看见碰撞检测范围。
+
+## 4. 配置碰撞检测：这是“四个转子一起抓取”的前提
+
+对 `PickDetectionArea` 与 4 个工件的 `DetectionArea`：
+
+1. 都使用 `Area3D`，下面各放一个 `CollisionShape3D`。
+2. 碰撞形状先使用 `SphereShape3D`，便于初学调试。
+3. 让它们使用能互相检测到的碰撞层和碰撞遮罩；初学时可全部保持默认的第 1 层。
+4. 确保 `Area3D` 的监控功能没有被关闭。
+
+程序要求四个工件都满足检测条件才会挂接。这样可以避免只抓到部分转子仍继续转位。
 
 ```text
-1 → 2 → 1 → 4 → 1 → 3 → 1 → 5 → 6
+夹具闭合
+    ↓
+四个工件检测区全部有效？
+    ├─ 是：四个转子全部挂到 WorkpieceMount
+    └─ 否：取消本次夹取并等待检查
 ```
 
-对应：
+## 5. 加入 C# 脚本
+
+在项目根目录新建 `Models` 文件夹。该功能采用 C# 的 `partial class` 组织方式：多个文件共同组成同一个 `TransferArm` 类。
+
+从本仓库复制以下文件到新项目的 `Models/` 中。**文件名、类名和 `partial` 关键字都不要改。**
+
+| 文件 | 负责什么 |
+|---|---|
+| [TransferArm.cs](Models/TransferArm.cs) | 节点引用、初始化、空格/D/E 输入入口 |
+| [TransferArm.Motion.cs](Models/TransferArm.Motion.cs) | 升降、夹爪、旋转、放件和复位顺序 |
+| [TransferArm.Workpieces.cs](Models/TransferArm.Workpieces.cs) | 四转子检测、挂接、分离、上料回转 |
+| [TransferArm.Detection.cs](Models/TransferArm.Detection.cs) | 左右测速机构并行移动与测量 |
+| [TransferArmState.cs](Models/TransferArmState.cs) | 机械手和检测机构状态枚举 |
+
+然后将 `TransferArm.cs` 挂到场景中的 `TransferArm` 节点。
+
+> 验证：保存全部脚本。Godot 底部 **输出** 面板中不应出现 C# 编译错误；也可以在项目根目录运行 `dotnet build ReView.sln`。
+
+### 这些脚本为什么要拆开？
+
+不要把所有逻辑写进一个几百行脚本。`partial class` 让每个文件只负责一种事情：
 
 ```text
-下降 → 夹取 → 上升 → 旋转 → 下降 → 松爪 → 上升 → 测速 → 复位
+输入与初始化 → TransferArm.cs
+运动顺序     → TransferArm.Motion.cs
+工件搬运     → TransferArm.Workpieces.cs
+测速机构     → TransferArm.Detection.cs
+状态定义     → TransferArmState.cs
 ```
 
-## 四个转子为什么能跟随机械手
+它们在编译后仍然是同一个 `TransferArm` 组件，Inspector 中的引用和参数也只出现一次。
 
-程序先检查四个转子是否都位于夹取范围。只有全部满足时，才把它们临时挂到机械手的“工件挂点”节点下；机械手移动时，四个转子会跟随。松爪后，转子会重新挂回目标工位。
+## 6. 最关键一步：在 Inspector 绑定节点
+
+选中挂有 `TransferArm.cs` 的 `TransferArm` 节点，在 Inspector 中按下表拖拽节点引用。
+
+| Inspector 字段 | 拖入什么节点 |
+|---|---|
+| `LiftPart` | `TransferArm` 自身，或实际的升降部件根节点 |
+| `RotatePart` | `RotatePart` |
+| `Grippers` | 8 个夹爪节点，顺序固定 |
+| `Workpieces` | `Workpiece1` 到 `Workpiece4`，顺序固定 |
+| `WorkpieceDetectionAreas` | 4 个工件各自的 `DetectionArea`，顺序必须与 Workpieces 相同 |
+| `WorkpieceMount` | `RotatePart/WorkpieceMount` |
+| `WorkpieceReleaseParent` | `Main` 或目标工位的共同父节点 |
+| `PickDetectionArea` | `WorkpieceMount/PickDetectionArea` |
+| `LoadingTurntable` | `LoadingTurntable` |
+| `LeftDetectionUnit` / `RightDetectionUnit` | 左右检测模块根节点 |
+| `LeftDetectionLift` / `RightDetectionLift` | 左右检测模块的升降子节点 |
+
+最容易出错的是数组顺序。请始终保证：
 
 ```text
-各自初始工位
-        ↓ 夹紧确认
-机械手 / 工件挂点
-        ↓ 松爪确认
-目标工位
+Workpieces[0]              ↔ WorkpieceDetectionAreas[0]
+Workpieces[1]              ↔ WorkpieceDetectionAreas[1]
+Workpieces[2]              ↔ WorkpieceDetectionAreas[2]
+Workpieces[3]              ↔ WorkpieceDetectionAreas[3]
 ```
 
-这能避免“只抓到部分转子仍继续运行”的错误演示。
+## 7. 配置第一组动作参数
 
-## 修改动作速度和角度
+仍在 Inspector 中，先使用保守参数完成测试：
 
-1. 停止运行。
-2. 在场景树中选择 `转臂部套-升降部分`。
-3. 在右侧 **检查器（Inspector）** 中找到 `TransferArm` 导出的参数。
-4. 修改后按 `Ctrl + S` 保存，并重新运行。
+| 参数 | 初始建议值 | 用途 |
+|---|---:|---|
+| `HomePosition` | `(0, 0, 0)` | 升降原点 |
+| `PickPosition` | `(0, -3, 0)` | 简化场景的取件高度 |
+| `PlacePosition` | `(0, -3, 0)` | 简化场景的放件高度 |
+| `LiftDuration` | `1.0` | 升降用时（秒） |
+| `RotateAngle` | `90` | 转臂目标角度 |
+| `RotateDuration` | `1.0` | 旋转用时（秒） |
+| `GripperCloseTime` | `0.5` | 夹爪开合用时（秒） |
+| `PickupDistanceTolerance` | 视场景大小调整 | 碰撞未覆盖时的距离兜底 |
 
-| 参数 | 作用 | 修改效果 |
-|---|---|---|
-| `LiftDuration` | 升降动画用时 | 数值越大越慢 |
-| `RotateDuration` | 转臂旋转动画用时 | 数值越大越慢 |
-| `RotateAngle` | 转臂目标角度 | 通常为 `90` |
-| `GripperCloseTime` | 夹具开合用时 | 数值越大越慢 |
-| `DetectionHoldTime` | 测速模拟保持时间 | 数值越大停留越久 |
-| `PickPosition` | 取件下降位置 | 初学者不建议修改 |
-| `PlacePosition` | 放件下降位置 | 初学者不建议修改 |
+> `PickPosition` 的方向取决于你的模型坐标。先让它移动很小距离，确认上下方向正确后再增大数值。
 
-## 夹不住转子怎么办
+## 8. 逐项验证，不要直接做整机流程
 
-四个转子必须全部满足夹取条件，程序才会继续。请检查：
+建议按下面顺序验证；每一步成功后再进行下一步：
 
-1. 是否先按 `1`，使机械手下降到取件高度。
-2. 四个转子是否仍在各自初始工位。
-3. 是否误改了 `PickPosition`、`RotateAngle` 或模型坐标。
-4. 每个转子下是否存在 `转子检测区`。
-5. 机械手 `工件挂点/夹取检测区` 下是否存在 `CollisionShape3D`。
-6. 模型尺寸变更后，可适当增大夹取检测区的球形碰撞体半径。
+1. 运行场景，确认没有脚本错误。
+2. 按 `Space`，确认机械手首先下降。
+3. 确认 8 个夹爪能够闭合。
+4. 确认四个转子成为 `WorkpieceMount` 的子节点并跟随机械手上升。
+5. 确认转臂旋转至设定角度。
+6. 确认机械手下降、夹爪打开，转子回到 `WorkpieceReleaseParent`。
+7. 确认左右检测模块能够同时移动、测量、返回。
+8. 确认流程结束后机械手和转臂回原点。
 
-建议先按 `E` 停止，再按 `6` 复位，最后按 `空格` 重新执行。
+运行完整流程的按键：
 
-## 常见问题
+| 按键 | 功能 |
+|---|---|
+| `空格` | 四转子完整搬运 + 测速 + 复位 |
+| `D` | 只执行测速流程 |
+| `E` | 停止当前动画并复位检测模块 |
 
-### C# 脚本报错
+## 9. 第二阶段：替换为真实设备模型
 
-通常是打开了普通 Godot，或系统没有安装 .NET 8 SDK。请确认使用 Godot .NET 版。
+功能验证通过后，再导入本仓库的 `Models/` 资源，或使用自己的 GLB/GLTF/Blender 模型。
+
+替换原则只有一条：**可见模型可以替换，运动节点层级和 Inspector 引用不要随意改变。**
+
+推荐做法：
+
+1. 将真实机械臂模型放到 `TransferArm` 下。
+2. 将可旋转模型放在 `RotatePart` 下。
+3. 将 8 个夹爪可动部件分别放到 8 个 `Gripper` 节点下。
+4. 将真实转子模型放在各自 `Workpiece` 节点下。
+5. 给每个转子保留一个独立 `DetectionArea`。
+6. 将测速机构模型分别放在左右检测节点下。
+7. 每替换一个机构就运行一次，确认局部坐标和旋转轴正确。
+
+如果 `.blend` 模型无法自动导入，可先在 Blender 中导出为 `.glb`，再导入 Godot。
+
+## 10. 常见失败与排查
+
+### 夹爪闭合了，但转子没有跟随
+
+原因通常是以下之一：
+
+- 有一个或多个转子未进入夹取检测范围；
+- 四个工件检测区的数组顺序与转子数组顺序不一致；
+- `WorkpieceMount` 没有绑定；
+- `PickPosition` 没有让机械手降到正确高度。
+
+处理：打开 **Debug → Visible Collision Shapes**，先确认 5 个检测区域的位置和大小。
+
+### 转臂方向不对或绕错轴旋转
+
+检查 `RotatePart` 是否选成了正确的旋转子节点。若模型导入坐标与 Godot 坐标不同，优先在 `RotatePart` 外再增加一个空的 `Node3D` 作为旋转枢轴，而不是直接修改复杂模型的网格坐标。
 
 ### 按键没有反应
 
-请先单击运行中的三维窗口。自动流程未结束前，手动数字键不会生效。
+先单击运行窗口获得焦点。动作未结束时，重复按同一个流程键不会启动并行流程。
 
 ### 画面停在一半
 
-按 `E` 停止当前动画，再按 `6` 复位。若为夹取失败，请检查碰撞检测区和转子位置。
+先按 `E` 停止，再检查 Godot 输出窗口的警告。最常见原因是四个转子没有全部检测成功。
 
-### 只演示测速模块
+## 11. 在本项目中寻找对照
 
-按 `D` 或 `5`。左右模块会并行移入、下降、保持测量、上升并返回原位。
+本仓库已提供完整参考场景：[node_3d.tscn](node_3d.tscn)。其实际配置中：
 
-## 代码地图
+- 脚本挂在 `转臂部套-升降部分`；
+- 该节点自身作为升降部件；
+- `转臂部套-旋转部分` 是转位部件；
+- `工件挂点/夹取检测区` 是机械手的统一夹取检测区；
+- 四个 `转子检测区` 分别对应上料、两处平衡测量和去重工位。
 
-| 文件 | 职责 |
-|---|---|
-| `Models/TransferArm.cs` | 初始化节点、处理空格/D/E 等入口按键 |
-| `Models/TransferArm.Motion.cs` | 升降、夹具、旋转和复位的动作顺序 |
-| `Models/TransferArm.Workpieces.cs` | 四转子检测、挂接、分离和上料转台旋转 |
-| `Models/TransferArm.Detection.cs` | 左右测速模块并行流程 |
-| `Models/TransferArm.ManualControls.cs` | 数字键 1～6 的单动作调试 |
-| `Models/TransferArmState.cs` | 机械手和测速模块状态定义 |
-| `node_3d.tscn` | 主场景、节点引用和 Inspector 配置 |
+建议先按照第 3～8 节做出简化版，再打开这个场景对照 Inspector 的真实绑定方式。
 
-## 后续接入真实 PLC
+## 12. 后续：从离线动画走向真实数字孪生
 
-当前项目仅做动画演示。后续可通过 WPF 上位机读取 PLC 的实际角度、升降位置、夹紧反馈、工件有无和主轴转速，再将这些实际数据发送给 Godot。届时模型应只跟随 PLC 反馈显示，不应由 Godot 直接控制电机或气缸。
+本教程复刻的是离线演示。以后接入真实设备时，请不要让 Godot 直接驱动电机或气缸。
 
-## 分享项目
-
-分享或克隆项目时，应保留：
+正确链路是：
 
 ```text
-Models/
-Models 内的模型文件
-node_3d.tscn
-project.godot
-ReView.csproj
-ReView.sln
-README.md
+PLC 实际位置 / 夹紧反馈 / 转速
+        ↓
+WPF 上位机读取并生成统一设备状态
+        ↓
+Godot 根据真实反馈更新模型
 ```
 
-`.godot/` 是自动生成的缓存目录，通常不需要分享；其他电脑第一次导入时会自动生成。
+也就是说，真实模式下模型的角度、升降位置和夹紧状态应来自 PLC 反馈；Godot 只做显示。
 
 ---
 
-**一句话记忆：空格演示全流程；1～6 拆开调试；四个转子必须全部检测成功才能一起被机械手带走。**
+完成本教程后，你不但会使用该数字孪生，还能在任何 Godot C# 项目中复刻同类的“多工位搬运 + 碰撞确认 + 父子节点挂接”功能。
