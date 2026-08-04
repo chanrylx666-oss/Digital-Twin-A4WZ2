@@ -204,7 +204,266 @@ Workpieces[3]              ↔ WorkpieceDetectionAreas[3]
 | `D` | 只执行测速流程 |
 | `E` | 停止当前动画并复位检测模块 |
 
-## 9. 第二阶段：替换为真实设备模型
+## 9. 代码实战：函数控制哪个节点，顺序怎么写
+
+这一节是复刻的核心。先记住一条规则：**代码不应该直接操作模型文件，而应该操作已经在 Inspector 绑定好的运动节点。**
+
+### 9.1 先写节点字段：让代码认识场景
+
+在 `TransferArm.cs` 中，使用 `[Export]` 将节点引用暴露到 Inspector。下面是最小必需字段：
+
+```csharp
+[Export] public Node3D LiftPart { get; set; }
+[Export] public Node3D RotatePart { get; set; }
+[Export] public Node3D[] Grippers { get; set; }
+
+[Export] public Node3D[] Workpieces { get; set; }
+[Export] public Area3D[] WorkpieceDetectionAreas { get; set; }
+[Export] public Node3D WorkpieceMount { get; set; }
+[Export] public Node3D WorkpieceReleaseParent { get; set; }
+[Export] public Area3D PickDetectionArea { get; set; }
+
+[Export] public Node3D LoadingTurntable { get; set; }
+[Export] public Node3D LeftDetectionUnit { get; set; }
+[Export] public Node3D LeftDetectionLift { get; set; }
+[Export] public Node3D RightDetectionUnit { get; set; }
+[Export] public Node3D RightDetectionLift { get; set; }
+```
+
+字段和节点的控制关系如下：
+
+| 字段 | 绑定节点 | 被哪个函数控制 | 改变什么 |
+|---|---|---|---|
+| `LiftPart` | 升降机构根节点 | `TweenLift()` | `Position`，实现升降 |
+| `RotatePart` | 转臂旋转子节点 | `RotateToPlace()`、`ResetArm()` | `RotationDegrees`，实现转位 |
+| `Grippers` | 8 个夹爪子节点 | `ClampWorkpiece()`、`UnclampWorkpiece()` | 每个夹爪的局部 `Position` |
+| `Workpieces` | 4 个转子根节点 | `TryAttachAllWorkpieces()`、`ReleaseAllWorkpieces()` | 父节点，决定是否跟随机械手 |
+| `PickDetectionArea` | 机械手夹取检测区 | `IsPickupOverlapping()` | 读取是否与转子检测区重叠 |
+| `LoadingTurntable` | 上料回转台 | `RotateLoadingTurntable()` | `RotationDegrees` |
+| 左右 Detection 字段 | 检测模块和升降子节点 | `StartDetectionUnit()` 等 | `Position`，实现测量动作 |
+
+### 9.2 初始化与按键入口怎么写
+
+`_Ready()` 在场景加载完成后执行。它的职责不是开始运动，而是记录所有机构的初始位置；否则夹爪打开后无法准确回到原位。
+
+```csharp
+public override void _Ready()
+{
+    if (LiftPart != null) LiftPart.Position = HomePosition;
+    if (RotatePart != null) RotatePart.RotationDegrees = Vector3.Zero;
+    InitializeGrippers();
+    InitializeDetectionUnits();
+}
+```
+
+`_Input()` 是按键入口，只负责选择流程，不应在这里写复杂动作：
+
+```csharp
+public override void _Input(InputEvent @event)
+{
+    if (@event is not InputEventKey key || !key.Pressed) return;
+
+    if (key.Keycode == Key.Space) StartTransferCycle();
+    else if (key.Keycode == Key.D) StartDetectionCycle();
+    else if (key.Keycode == Key.E) EmergencyStop();
+}
+```
+
+### 9.3 先写通用升降函数，再写流程函数
+
+Godot 的 `Tween` 会在指定时间内改变属性。下面的通用函数控制 `LiftPart` 的局部坐标；运动结束后才执行 `completed` 指定的下一步。
+
+```csharp
+private void TweenLift(Vector3 target, float duration, System.Action completed)
+{
+    _currentTween = CreateTween()
+        .SetTrans(Tween.TransitionType.Cubic)
+        .SetEase(Tween.EaseType.InOut);
+
+    _currentTween.TweenProperty(LiftPart, "position", target, duration);
+    _currentTween.Finished += completed;
+}
+```
+
+这是控制顺序的关键。`TweenProperty()` 是异步动画，不能这样写：
+
+```csharp
+// 错误：尚未下降完成就立即开始夹紧。
+TweenLift(PickPosition, LiftDuration, null);
+ClampWorkpiece();
+```
+
+而应通过完成回调串联：
+
+```csharp
+private void MoveDownToPick()
+{
+    ChangeState(TransferArmState.MovingDown);
+    TweenLift(PickPosition, LiftDuration, OnMoveDownFinished);
+}
+
+private void OnMoveDownFinished()
+{
+    ClampWorkpiece();
+}
+```
+
+### 9.4 完整搬运流程：按函数逐步编写
+
+`StartTransferCycle()` 只做两件事：阻止重复启动，并启动第一步。
+
+```csharp
+public void StartTransferCycle()
+{
+    if (_isRunning) return;
+    _isRunning = true;
+    MoveDownToPick();
+}
+```
+
+随后由“当前动作完成 → 回调启动下一动作”形成下面的调用链：
+
+```text
+StartTransferCycle
+  → MoveDownToPick                    控制 LiftPart 下降
+  → OnMoveDownFinished
+  → ClampWorkpiece                    控制 8 个 Grippers 闭合
+  → OnClampFinished
+  → TryAttachAllWorkpieces            检测并把 4 个 Workpieces 挂到 WorkpieceMount
+  → MoveUpAfterPick                   控制 LiftPart 上升
+  → RotateToPlace                     控制 RotatePart 转到目标角度
+  → MoveDownToPlace                   控制 LiftPart 下降
+  → UnclampWorkpiece                  控制 8 个 Grippers 打开
+  → OnUnclampFinished
+  → ReleaseAllWorkpieces              将 4 个 Workpieces 挂回放件父节点
+  → MoveUpAfterPlace                  控制 LiftPart 上升，并启动测速
+  → StartDetectionSequence
+  → ResetArm                          升降和旋转回零
+```
+
+### 9.5 夹具函数怎么写
+
+`ClampWorkpiece()` 遍历 `Grippers` 数组，为每个夹爪建立并行动画；所有夹爪完成后才触发 `OnClampFinished()`。
+
+```csharp
+private void ClampWorkpiece()
+{
+    ChangeState(TransferArmState.Clamping);
+    _currentTween = CreateTween()
+        .SetTrans(Tween.TransitionType.Cubic)
+        .SetEase(Tween.EaseType.InOut);
+
+    for (int i = 0; i < Grippers.Length; i++)
+    {
+        if (Grippers[i] == null) continue;
+        Vector3 target = _gripperHomePositions[i] + GetGripperOffset(i);
+        _currentTween.Parallel().TweenProperty(
+            Grippers[i], "position", target, GripperCloseTime);
+    }
+
+    _currentTween.Finished += OnClampFinished;
+}
+```
+
+`GetGripperOffset(i)` 决定第 `i` 个夹爪向哪个局部方向移动。当前参考实现中，前 4 个夹爪沿局部 Z 轴开合，后 4 个夹爪沿局部 Y 轴开合。若你的模型夹爪方向不同，修改的就是这个函数，而不是整个自动流程。
+
+```csharp
+private static Vector3 GetGripperOffset(int index) => index switch
+{
+    0 or 2 => new Vector3(0, 0, -5),
+    1 or 3 => new Vector3(0, 0, 5),
+    4 or 6 => new Vector3(0, -5, 0),
+    5 or 7 => new Vector3(0, 5, 0),
+    _ => Vector3.Zero
+};
+```
+
+### 9.6 转子挂接和分离函数怎么写
+
+夹爪闭合完成后，不要立刻上升。必须先确认四个转子都可抓取：
+
+```csharp
+private void OnClampFinished()
+{
+    if (!TryAttachAllWorkpieces())
+    {
+        OpenGrippersAndReset();
+        return;
+    }
+
+    MoveUpAfterPick();
+}
+```
+
+`TryAttachAllWorkpieces()` 的核心是 `Reparent(WorkpieceMount, true)`：第二个参数 `true` 表示保持转子当前的世界坐标，避免挂接瞬间跳到别的位置。
+
+```csharp
+foreach (Node3D rotor in picked)
+{
+    rotor.Reparent(WorkpieceMount, true);
+}
+```
+
+松爪时反向操作：
+
+```csharp
+private void ReleaseAllWorkpieces()
+{
+    Node parent = WorkpieceReleaseParent ?? GetTree().CurrentScene;
+    foreach (Node3D rotor in _heldWorkpieces)
+    {
+        if (rotor != null) rotor.Reparent(parent, true);
+    }
+}
+```
+
+### 9.7 测速模块为什么能左右同时运动
+
+`StartDetectionSequence()` 不等待左侧结束才启动右侧，而是同时调用两边：
+
+```csharp
+private void StartDetectionSequence()
+{
+    if (LeftDetectionUnit != null && LeftDetectionLift != null)
+        StartDetectionUnit(true);
+    if (RightDetectionUnit != null && RightDetectionLift != null)
+        StartDetectionUnit(false);
+}
+```
+
+每一侧自己的顺序为：
+
+```text
+StartDetectionUnit
+→ LowerDetectionLift
+→ HoldMeasurement
+→ RaiseDetectionLift
+→ ReturnDetectionUnit
+→ CheckAllDetectionComplete
+```
+
+`CheckAllDetectionComplete()` 只有在左右状态都回到 `Idle` 后，才调用 `OnDetectionComplete()` 并让机械手复位。这就是“并行动作，汇合后再继续”的写法。
+
+### 9.8 新增一个动作时，按这个模板写
+
+例如未来要增加“钻孔机构下压”，先新增 `DrillLift`、`DrillDownPosition`、`DrillDuration` 三个导出字段，并在 `TransferArmState` 枚举中加入 `Drilling` 状态；然后按相同结构编写：
+
+```csharp
+private void LowerDrill()
+{
+    ChangeState(TransferArmState.Drilling);
+    TweenNode(DrillLift, drillDownPosition, DrillDuration, OnDrillDownFinished);
+}
+
+private void OnDrillDownFinished()
+{
+    // 此处写：保持、钻孔、或启动下一步。
+}
+```
+
+模板顺序固定：**设置状态 → 控制已绑定节点 → 在完成回调中判断条件 → 启动下一步。**
+
+## 10. 第二阶段：替换为真实设备模型
 
 功能验证通过后，再导入本仓库的 `Models/` 资源，或使用自己的 GLB/GLTF/Blender 模型。
 
@@ -222,7 +481,7 @@ Workpieces[3]              ↔ WorkpieceDetectionAreas[3]
 
 如果 `.blend` 模型无法自动导入，可先在 Blender 中导出为 `.glb`，再导入 Godot。
 
-## 10. 常见失败与排查
+## 11. 常见失败与排查
 
 ### 夹爪闭合了，但转子没有跟随
 
@@ -247,7 +506,7 @@ Workpieces[3]              ↔ WorkpieceDetectionAreas[3]
 
 先按 `E` 停止，再检查 Godot 输出窗口的警告。最常见原因是四个转子没有全部检测成功。
 
-## 11. 在本项目中寻找对照
+## 12. 在本项目中寻找对照
 
 本仓库已提供完整参考场景：[node_3d.tscn](node_3d.tscn)。其实际配置中：
 
@@ -259,7 +518,7 @@ Workpieces[3]              ↔ WorkpieceDetectionAreas[3]
 
 建议先按照第 3～8 节做出简化版，再打开这个场景对照 Inspector 的真实绑定方式。
 
-## 12. 后续：从离线动画走向真实数字孪生
+## 13. 后续：从离线动画走向真实数字孪生
 
 本教程复刻的是离线演示。以后接入真实设备时，请不要让 Godot 直接驱动电机或气缸。
 
