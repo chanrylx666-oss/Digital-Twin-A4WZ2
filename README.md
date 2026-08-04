@@ -208,6 +208,139 @@ Workpieces[3]              ↔ WorkpieceDetectionAreas[3]
 
 这一节是复刻的核心。先记住一条规则：**代码不应该直接操作模型文件，而应该操作已经在 Inspector 绑定好的运动节点。**
 
+### 9.0 零基础先学会一个运动函数
+
+在 Godot 中，“让机构运动”本质上是：**在一段时间内，改变某个 `Node3D` 的位置或角度。**
+
+| 想实现的效果 | 修改的 Node3D 属性 | Godot 属性名 |
+|---|---|---|
+| 升降、水平移动、夹爪开合 | 局部位置 | `position` |
+| 绕轴旋转 | 角度（单位：度） | `rotation_degrees` |
+| 直接瞬移到某处 | 直接赋值 `Position` | 不使用 Tween |
+
+先在空场景中创建一个 `Node3D`，命名为 `LiftTest`，并在下面放一个 `MeshInstance3D` 方块。然后新建 `MotionDemo.cs` 并挂到 `LiftTest`：
+
+```csharp
+using Godot;
+
+public partial class MotionDemo : Node3D
+{
+    // 在 Inspector 中拖入要运动的节点；本例可拖入 LiftTest 自己。
+    [Export] public Node3D MovingPart { get; set; }
+
+    // 在 Inspector 中可修改的目标位置与动画时长。
+    [Export] public Vector3 DownPosition { get; set; } = new(0, -3, 0);
+    [Export] public float MoveSeconds { get; set; } = 1.0f;
+
+    public override void _Input(InputEvent @event)
+    {
+        if (@event is InputEventKey key && key.Pressed && key.Keycode == Key.Space)
+        {
+            MoveDown();
+        }
+    }
+
+    private void MoveDown()
+    {
+        // CreateTween() 创建一个“在一段时间内改变属性”的动画对象。
+        Tween tween = CreateTween();
+
+        // 参数依次是：目标节点、要改的属性名、目标值、持续秒数。
+        tween.TweenProperty(MovingPart, "position", DownPosition, MoveSeconds);
+    }
+}
+```
+
+运行后按空格，方块会移动到 `(0, -3, 0)`。如果方向相反，将 `DownPosition` 改成 `(0, 3, 0)`。这就是后面所有升降、夹爪、探头移动函数的共同原理。
+
+#### 位置、局部坐标和世界坐标
+
+本项目主要修改 `Position`，即**相对父节点的局部坐标**。这很重要：夹爪是转臂的子节点，因此转臂旋转时，夹爪和已挂接的转子会自动一起旋转。
+
+```text
+父节点 RotatePart 旋转
+        ↓
+子节点 Gripper 跟随旋转
+        ↓
+子节点 WorkpieceMount 跟随旋转
+        ↓
+已挂接的转子也跟随旋转
+```
+
+只有需要忽略父节点影响时才使用 `GlobalPosition`。初学复刻时，优先使用 `Position`。
+
+#### 把第一个函数升级为“运动完成后通知下一步”
+
+机械手下降需要时间，不能调用下降函数后立刻夹取。为此给 Tween 注册 `Finished` 回调：
+
+```csharp
+private void MoveDownThenClamp()
+{
+    Tween tween = CreateTween();
+    tween.TweenProperty(LiftPart, "position", PickPosition, LiftDuration);
+
+    // 动画真正结束时，Godot 才调用 ClampWorkpiece。
+    tween.Finished += ClampWorkpiece;
+}
+```
+
+以后每一个自动动作都遵循同一模式：**创建 Tween → 改变节点属性 → Finished 中启动下一步。**
+
+#### 自己写旋转函数
+
+旋转与升降只有两个区别：目标节点换成 `RotatePart`，属性名换成 `rotation_degrees`。
+
+```csharp
+private void RotateArmToPlace()
+{
+    Tween tween = CreateTween();
+
+    // 本参考模型绕 X 轴转动 90 度。
+    // 若你的模型绕 Y 或 Z 轴转，将 90 放到对应位置。
+    Vector3 targetAngle = new Vector3(RotateAngle, 0, 0);
+    tween.TweenProperty(RotatePart, "rotation_degrees", targetAngle, RotateDuration);
+
+    tween.Finished += MoveDownToPlace;
+}
+```
+
+第一次调试旋转轴时，建议将 `RotateAngle` 设为 `10`，确认方向和枢轴正确后再改回 `90`，避免模型一下转到看不见的位置。
+
+#### 自己写夹具运动函数
+
+夹具不是旋转，而是多个节点同时沿自己的局部轴移动。`Parallel()` 的意思是“8 个夹爪同时开始动画”：
+
+```csharp
+private void CloseAllGrippers()
+{
+    Tween tween = CreateTween();
+
+    for (int i = 0; i < Grippers.Length; i++)
+    {
+        Vector3 closePosition = _gripperHomePositions[i] + GetGripperOffset(i);
+        tween.Parallel().TweenProperty(
+            Grippers[i], "position", closePosition, GripperCloseTime);
+    }
+
+    tween.Finished += OnClampFinished;
+}
+```
+
+如果某个夹爪向外移动，不要修改自动流程；只需要修改该夹爪对应的 `GetGripperOffset(i)` 方向，或检查该夹爪模型的局部坐标轴是否与其他夹爪一致。
+
+### 9.0.1 从最小运动函数进化到完整流程
+
+推荐按下面的学习顺序编写和验证，不要一次性复制全部流程：
+
+1. 写 `MoveDown()`，确认一个方块能下降。
+2. 写 `MoveUp()`，确认能回到原点。
+3. 写 `RotateArmToPlace()`，确认旋转轴正确。
+4. 写 `CloseAllGrippers()` 与打开夹具函数，确认 8 个夹爪同步开合。
+5. 写 `OnClampFinished()`，确认四转子能挂接。
+6. 最后才用 `Tween.Finished` 将前面所有函数串起来。
+
+每完成一步都按 F6 测试。只有前一步正确，才写后一步。
+
 ### 9.1 先写节点字段：让代码认识场景
 
 在 `TransferArm.cs` 中，使用 `[Export]` 将节点引用暴露到 Inspector。下面是最小必需字段：
