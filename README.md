@@ -5,6 +5,20 @@
 
 本教程不只是介绍如何操作成品，而是按搭建顺序解释：**为什么要创建这些节点、脚本怎么组织、Inspector 怎样绑定、如何验证每一步。**
 
+## 完整课程目录
+
+根 README 保留快速复刻路线；需要从 Blender 一直学到 WPF 串联时，请按顺序完成下面 7 章：
+
+1. [Blender 模型整理与导出](docs/tutorial/01-blender-model-preparation.md)
+2. [Godot 机械结构与节点层级](docs/tutorial/02-godot-mechanical-assembly.md)
+3. [坐标数据获取、记录与标定](docs/tutorial/03-coordinate-calibration.md)
+4. [运动控制函数从零编写](docs/tutorial/04-motion-control.md)
+5. [四工位顺序、夹取与状态机](docs/tutorial/05-workflow-control.md)
+6. [WPF 启动、嵌入并同步 Godot](docs/tutorial/06-wpf-godot-integration.md)
+7. [整体验收与故障排查](docs/tutorial/07-acceptance-troubleshooting.md)
+
+每章都包含“学习目标、操作步骤、代码、验证结果和常见错误”。课程总览见 [教学目录](docs/tutorial/README.md)。
+
 ## 0. 先理解复刻范围
 
 一个完整数字孪生包含两部分：
