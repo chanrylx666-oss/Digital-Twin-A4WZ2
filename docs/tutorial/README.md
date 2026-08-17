@@ -26,6 +26,11 @@ flowchart LR
 | [05 流程控制](05-workflow-control.md) | 用回调与状态机组织完整节拍 | 四件全部满足条件才统一转位 |
 | [06 WPF 串联](06-wpf-godot-integration.md) | 嵌入 Godot 并传递状态快照 | WPF 状态变化能更新三维画面 |
 | [07 验收](07-acceptance-troubleshooting.md) | 按层定位模型、坐标、代码与通信问题 | 可以重复运行完整周期 |
+| [08 脚本详解](08-script-code-explained.md) | 逐段理解节点引用、Tween、挂接、测速和急停 | 能说清每个函数控制的节点和后续回调 |
+| [09 WPF 连接详解](09-wpf-godot-connection.md) | 从零完成窗口嵌入、UDP 合同和 Godot 接收 | WPF 每个周期只触发一次对应动画 |
+| [10 PLC 数据绑定](10-plc-data-binding.md) | 设计点表、寄存器转换、轮询、握手和异常处理 | 模拟或真实 PLC 反馈能同时驱动 WPF 与 Godot |
+
+前 7 章用于完成第一次复刻；第 8～10 章用于理解代码、讲课和接入真实控制系统。
 
 ## 两种运行模式
 

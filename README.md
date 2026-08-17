@@ -7,7 +7,7 @@
 
 ## 完整课程目录
 
-根 README 保留快速复刻路线；需要从 Blender 一直学到 WPF 串联时，请按顺序完成下面 7 章：
+根 README 保留快速复刻路线；需要从 Blender 一直学到 WPF、PLC 串联时，请按顺序完成下面 10 章：
 
 1. [Blender 模型整理与导出](docs/tutorial/01-blender-model-preparation.md)
 2. [Godot 机械结构与节点层级](docs/tutorial/02-godot-mechanical-assembly.md)
@@ -16,6 +16,9 @@
 5. [四工位顺序、夹取与状态机](docs/tutorial/05-workflow-control.md)
 6. [WPF 启动、嵌入并同步 Godot](docs/tutorial/06-wpf-godot-integration.md)
 7. [整体验收与故障排查](docs/tutorial/07-acceptance-troubleshooting.md)
+8. [Godot 脚本逐段解释](docs/tutorial/08-script-code-explained.md)
+9. [WPF 与 Godot 连接逐步实现](docs/tutorial/09-wpf-godot-connection.md)
+10. [PLC 数据绑定、点表与异常处理](docs/tutorial/10-plc-data-binding.md)
 
 每章都包含“学习目标、操作步骤、代码、验证结果和常见错误”。课程总览见 [教学目录](docs/tutorial/README.md)。
 
