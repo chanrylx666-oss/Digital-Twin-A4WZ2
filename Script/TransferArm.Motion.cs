@@ -82,5 +82,12 @@ public partial class TransferArm
 		});
 	}
 	/// <summary>清除运行标志并回到待机状态</summary>
-	private void FinishCycle() { ChangeState(TransferArmState.Idle); _isRunning = false; GD.Print("[TransferArm] Cycle complete."); }
+	private void FinishCycle()
+	{
+		_manualLiftIsDown = false;
+		_manualArmIsRotated = false;
+		ChangeState(TransferArmState.Idle);
+		_isRunning = false;
+		GD.Print("[TransferArm] Cycle complete.");
+	}
 }

@@ -60,6 +60,7 @@ public partial class TransferArm : Node3D
 	private TransferArmState _currentState = TransferArmState.Idle;
 	private Tween _currentTween;
 	private bool _isRunning;
+	private bool _manualActionRunning;
 	private Vector3[] _gripperHomePositions;
 	private Node3D[] _heldWorkpieces = Array.Empty<Node3D>();
 	private Vector3 _loadingTurntableHomeRotation;
@@ -93,6 +94,7 @@ public partial class TransferArm : Node3D
 		if (key.Keycode == Key.Space) StartTransferCycle();
 		else if (key.Keycode == Key.D) StartDetectionCycle();
 		else if (key.Keycode == Key.E) EmergencyStop();
+		else HandleManualKey(key.Keycode);
 	}
 
 	/// <summary>启动一次完整的四转子同步搬运循环</summary>
@@ -124,6 +126,9 @@ public partial class TransferArm : Node3D
 		if (_currentTween?.IsValid() == true) _currentTween.Kill();
 		StopDetectionUnits();
 		_isRunning = false;
+		_manualActionRunning = false;
+		_manualLiftIsDown = false;
+		_manualArmIsRotated = false;
 		ChangeState(TransferArmState.Idle);
 	}
 }
