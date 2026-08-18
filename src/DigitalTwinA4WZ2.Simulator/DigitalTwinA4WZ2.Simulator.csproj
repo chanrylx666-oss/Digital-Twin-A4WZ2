@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\DigitalTwinA4WZ2.Domain\DigitalTwinA4WZ2.Domain.csproj" />
+    <ProjectReference Include="..\DigitalTwinA4WZ2.Application\DigitalTwinA4WZ2.Application.csproj" />
+    <ProjectReference Include="..\DigitalTwinA4WZ2.Acquisition\DigitalTwinA4WZ2.Acquisition.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

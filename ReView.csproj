@@ -4,4 +4,14 @@
     <TargetFramework Condition=" '$(GodotTargetPlatform)' == 'android' ">net9.0</TargetFramework>
     <EnableDynamicLoading>true</EnableDynamicLoading>
   </PropertyGroup>
+
+  <!--
+    Godot 项目与 WPF 解决方案共用仓库根目录。
+    必须排除独立的 WPF 源码和测试目录，防止 Godot SDK 的默认递归规则
+    把其他项目及其 obj 生成文件编译进 ReView 程序集。
+  -->
+  <ItemGroup>
+    <Compile Remove="src\**\*.cs" />
+    <Compile Remove="tests\**\*.cs" />
+  </ItemGroup>
 </Project>

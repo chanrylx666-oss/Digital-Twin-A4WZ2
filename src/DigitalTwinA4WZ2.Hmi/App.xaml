@@ -1,0 +1,57 @@
+<Application x:Class="DigitalTwinA4WZ2.Hmi.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Application.Resources>
+        <SolidColorBrush x:Key="PageBackgroundBrush" Color="#0B1220"/>
+        <SolidColorBrush x:Key="PanelBrush" Color="#111C2E"/>
+        <SolidColorBrush x:Key="PanelBorderBrush" Color="#24344D"/>
+        <SolidColorBrush x:Key="PrimaryBrush" Color="#27C7A8"/>
+        <SolidColorBrush x:Key="TextBrush" Color="#EEF5FF"/>
+        <SolidColorBrush x:Key="MutedTextBrush" Color="#91A3BC"/>
+
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            <Setter Property="FontFamily" Value="Microsoft YaHei UI"/>
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="Margin" Value="4"/>
+            <Setter Property="Padding" Value="16,9"/>
+            <Setter Property="Background" Value="#1C2B42"/>
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            <Setter Property="BorderBrush" Value="#344866"/>
+            <Setter Property="FontFamily" Value="Microsoft YaHei UI"/>
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Margin" Value="4"/>
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="Background" Value="#0D1727"/>
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            <Setter Property="BorderBrush" Value="#344866"/>
+        </Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="Margin" Value="4"/>
+            <Setter Property="Padding" Value="8"/>
+        </Style>
+        <Style TargetType="GroupBox">
+            <Setter Property="Margin" Value="8"/>
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource PanelBorderBrush}"/>
+        </Style>
+        <Style TargetType="TabItem">
+            <Setter Property="Margin" Value="2,2,2,0"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="Background" Value="#18263B"/>
+            <Setter Property="Foreground" Value="{StaticResource MutedTextBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource PanelBorderBrush}"/>
+            <Setter Property="FontFamily" Value="Microsoft YaHei UI"/>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#147D6B"/>
+                    <Setter Property="Foreground" Value="White"/>
+                    <Setter Property="BorderBrush" Value="#27C7A8"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Application.Resources>
+</Application>

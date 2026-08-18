@@ -1,3 +1,19 @@
-# Godot 4+ specific ignores
+# .NET / Visual Studio
+**/bin/
+**/obj/
+**/obj-alt/
+.vs/
+*.user
+*.suo
+TestResults/
+
+# Godot may create C# UID sidecars for the independent WPF solution.
+/src/**/*.cs.uid
+/tests/**/*.cs.uid
+
+# Godot generated data
 .godot/
 /android/
+
+# Local runtime data
+DigitalTwinA4WZ2-data/
